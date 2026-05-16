@@ -1,0 +1,14 @@
+{
+  "name": "parker-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A simple map-based viewer for Parker on-street parking sensors.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "NODE_ENV=production node server.js",
+    "check": "node --check server.js && node --check api/sensors.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

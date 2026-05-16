@@ -1,0 +1,328 @@
+:root {
+  color-scheme: light dark;
+  --text: #172018;
+  --muted: #5f6a73;
+  --page-bg: #eef2f4;
+  --map-bg: #eef2f4;
+  --glass: rgba(255, 255, 255, 0.82);
+  --glass-strong: rgba(255, 255, 255, 0.94);
+  --line: rgba(20, 31, 43, 0.16);
+  --shadow: rgba(32, 42, 52, 0.18);
+  --accent: #0b84ff;
+  --accent-focus: rgba(11, 132, 255, 0.34);
+  --accent-ring: rgba(11, 132, 255, 0.22);
+  --accent-glow: rgba(11, 132, 255, 0.54);
+  --free: #00b86b;
+  --free-core: rgba(255, 255, 255, 0.78);
+  --free-border: rgba(0, 184, 107, 0.34);
+  --free-ring: rgba(0, 184, 107, 0.28);
+  --free-glow: rgba(0, 184, 107, 0.58);
+  --free-outline: rgba(255, 255, 255, 0.96);
+  --warning: #8a5a00;
+  --warning-border: rgba(138, 90, 0, 0.36);
+  --overlay:
+    radial-gradient(circle at 50% 45%, transparent 0, transparent 48%, rgba(255, 255, 255, 0.18) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 24%, transparent 76%, rgba(255, 255, 255, 0.24));
+  --control-hover: rgba(10, 18, 28, 0.06);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f5f8fb;
+    --muted: #9eaab7;
+    --page-bg: #070a0f;
+    --map-bg: #070a0f;
+    --glass: rgba(10, 14, 20, 0.78);
+    --glass-strong: rgba(13, 18, 26, 0.9);
+    --line: rgba(255, 255, 255, 0.14);
+    --shadow: rgba(0, 0, 0, 0.38);
+    --accent: #35a7ff;
+    --accent-focus: rgba(53, 167, 255, 0.34);
+    --accent-ring: rgba(53, 167, 255, 0.22);
+    --accent-glow: rgba(53, 167, 255, 0.66);
+    --free: #28f29c;
+    --free-core: rgba(255, 255, 255, 0.72);
+    --free-border: rgba(40, 242, 156, 0.34);
+    --free-ring: rgba(40, 242, 156, 0.28);
+    --free-glow: rgba(40, 242, 156, 0.76);
+    --free-outline: rgba(5, 12, 9, 0.96);
+    --warning: #ffd36e;
+    --warning-border: rgba(255, 211, 110, 0.42);
+    --overlay:
+      radial-gradient(circle at 50% 45%, transparent 0, transparent 45%, rgba(0, 0, 0, 0.24) 100%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.16), transparent 22%, transparent 74%, rgba(0, 0, 0, 0.34));
+    --control-hover: rgba(255, 255, 255, 0.08);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+.map-shell,
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+}
+
+.map-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  background: var(--map-bg);
+}
+
+.map-shell::after {
+  position: absolute;
+  inset: 0;
+  z-index: 450;
+  pointer-events: none;
+  content: "";
+  background: var(--overlay);
+}
+
+.leaflet-control-zoom {
+  overflow: hidden;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background: var(--glass-strong);
+  box-shadow: 0 18px 48px var(--shadow) !important;
+}
+
+.leaflet-control-zoom a {
+  width: 46px !important;
+  height: 46px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 22px !important;
+  line-height: 46px !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--control-hover) !important;
+}
+
+.leaflet-control-attribution {
+  background: var(--glass) !important;
+  color: var(--muted) !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--text) !important;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border: 1px solid var(--line);
+  background: var(--glass-strong);
+  color: var(--text);
+  box-shadow: 0 18px 50px var(--shadow);
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.leaflet-popup-content strong {
+  color: var(--free);
+}
+
+.status {
+  position: absolute;
+  right: 50%;
+  bottom: 24px;
+  z-index: 500;
+  min-width: 0;
+  max-width: calc(100% - 32px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass);
+  color: var(--text);
+  padding: 10px 14px;
+  box-shadow: 0 18px 48px var(--shadow);
+  font-size: 0.98rem;
+  font-weight: 780;
+  text-align: center;
+  transform: translateX(50%);
+  backdrop-filter: blur(18px);
+}
+
+.status[data-tone="warning"] {
+  border-color: var(--warning-border);
+  color: var(--warning);
+}
+
+.status[data-tone="success"] {
+  border-color: var(--free-border);
+}
+
+.refresh-button {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 500;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 18px 48px var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.refresh-button:hover {
+  background: var(--glass-strong);
+}
+
+.refresh-button:focus-visible {
+  outline: 3px solid var(--accent-focus);
+  outline-offset: 3px;
+}
+
+.refresh-button:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+.refresh-button svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.refresh-button[aria-busy="true"] svg {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.parking-marker span,
+.user-marker span {
+  display: block;
+  border-radius: 999px;
+}
+
+.parking-marker span {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--free-outline);
+  background: var(--free);
+  box-shadow:
+    0 0 0 2px var(--free-ring),
+    0 0 22px var(--free-glow),
+    0 12px 24px var(--shadow);
+}
+
+.parking-marker span::after {
+  position: absolute;
+  inset: 6px;
+  border-radius: inherit;
+  background: var(--free-core);
+  content: "";
+}
+
+.user-marker span {
+  position: relative;
+  width: 88px;
+  height: 88px;
+}
+
+.user-marker span::before,
+.user-marker span::after {
+  position: absolute;
+  inset: 10px;
+  border: 2px solid var(--accent);
+  border-radius: inherit;
+  content: "";
+  opacity: 0;
+  animation: radar-pulse 2.6s ease-out infinite;
+}
+
+.user-marker span::after {
+  animation-delay: 1.3s;
+}
+
+.user-marker i {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  width: 32px;
+  height: 32px;
+  border: 5px solid rgba(255, 255, 255, 0.95);
+  border-radius: inherit;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 8px var(--accent-ring),
+    0 0 24px var(--accent-glow),
+    0 12px 28px var(--shadow);
+}
+
+@keyframes radar-pulse {
+  0% {
+    opacity: 0.58;
+    transform: scale(0.32);
+  }
+
+  72%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 620px) {
+  .status {
+    bottom: 14px;
+    min-width: auto;
+    padding: 12px 14px;
+    font-size: 0.94rem;
+  }
+
+  .refresh-button {
+    top: 14px;
+    right: 14px;
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh-button[aria-busy="true"] svg,
+  .user-marker span::before,
+  .user-marker span::after {
+    animation: none;
+  }
+}
