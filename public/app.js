@@ -76,6 +76,7 @@ const elements = {
   refresh: document.querySelector("#refreshButton"),
   info: document.querySelector("#infoButton"),
   infoPanel: document.querySelector("#infoPanel"),
+  filters: document.querySelectorAll(".filter-button"),
 };
 
 const map = L.map("map", { zoomControl: false }).setView([BUDAPEST_CENTER.lat, BUDAPEST_CENTER.lng], 17);
@@ -90,6 +91,8 @@ let currentCenter = BUDAPEST_CENTER;
 let isUsingFallbackLocation = true;
 let isLoading = false;
 let lastFetchCenter;
+let currentSpaces = [];
+let activeFilter = "all";
 
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
@@ -155,6 +158,54 @@ function normalizeSpaces(spaces, center) {
     .sort((a, b) => a.distance - b.distance);
 }
 
+function isResidentialSpace(space) {
+  return space.category === "Residential" || space.residentialLocationId !== null;
+}
+
+function categoryLabel(space) {
+  if (isResidentialSpace(space)) {
+    return "Lakossági";
+  }
+
+  if (space.category === "Normal") {
+    return "Normál";
+  }
+
+  return space.category || "Nincs kategória";
+}
+
+function filterSpaces(spaces) {
+  if (activeFilter === "residential") {
+    return spaces.filter(isResidentialSpace);
+  }
+
+  if (activeFilter === "nonResidential") {
+    return spaces.filter((space) => !isResidentialSpace(space));
+  }
+
+  return spaces;
+}
+
+function statusLabel(count, usingFallbackLocation) {
+  const location = usingFallbackLocation ? "a közelben" : "körülötted";
+
+  if (activeFilter === "residential") {
+    return `${count} lakossági hely ${location}`;
+  }
+
+  if (activeFilter === "nonResidential") {
+    return `${count} nem lakossági hely ${location}`;
+  }
+
+  return `${count} szabad hely ${location}`;
+}
+
+function renderFilteredSpaces(center, usingFallbackLocation, tone = "success") {
+  const spaces = filterSpaces(currentSpaces);
+  renderMap(center, spaces);
+  setStatus(statusLabel(spaces.length, usingFallbackLocation), tone);
+}
+
 function renderMap(center, spaces) {
   markerLayer.clearLayers();
   renderUserMarker(center);
@@ -165,7 +216,7 @@ function renderMap(center, spaces) {
     })
       .bindPopup(
         `<strong>${space.parkingPlaceId || "Szabad parkolóhely"}</strong><br>${
-          space.category || "Nincs kategória"
+          categoryLabel(space)
         }<br>${Math.round(space.distance)} m távolságra`
       )
       .addTo(markerLayer);
@@ -207,13 +258,11 @@ async function loadParkingSpaces(center, usingFallbackLocation = false) {
       throw new Error(`API returned ${response.status}`);
     }
 
-    const spaces = normalizeSpaces(await response.json(), center);
-    renderMap(center, spaces);
-    setStatus(`${spaces.length} szabad hely ${usingFallbackLocation ? "a közelben" : "körülötted"}`, "success");
+    currentSpaces = normalizeSpaces(await response.json(), center);
+    renderFilteredSpaces(center, usingFallbackLocation);
   } catch (error) {
-    const spaces = normalizeSpaces(fallbackSpaces, center);
-    renderMap(center, spaces);
-    setStatus(`${spaces.length} demo hely a közelben`, "warning");
+    currentSpaces = normalizeSpaces(fallbackSpaces, center);
+    renderFilteredSpaces(center, true, "warning");
   } finally {
     setRefreshLoading(false);
   }
@@ -280,6 +329,16 @@ function start() {
 
 elements.refresh.addEventListener("click", () => {
   loadParkingSpaces(currentCenter, isUsingFallbackLocation);
+});
+
+elements.filters.forEach((button) => {
+  button.addEventListener("click", () => {
+    activeFilter = button.dataset.filter;
+    elements.filters.forEach((filterButton) => {
+      filterButton.setAttribute("aria-pressed", String(filterButton === button));
+    });
+    renderFilteredSpaces(currentCenter, isUsingFallbackLocation);
+  });
 });
 
 elements.info.addEventListener("click", () => {

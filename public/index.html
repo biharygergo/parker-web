@@ -11,6 +11,11 @@
     <main class="map-shell">
       <div id="map" aria-label="Térkép a közeli szabad parkolóhelyekkel"></div>
       <div id="status" class="status">Helyzet keresése...</div>
+      <div class="filter-control" role="group" aria-label="Parkolóhely típus szűrő">
+        <button class="filter-button" type="button" data-filter="all" aria-pressed="true">Mind</button>
+        <button class="filter-button" type="button" data-filter="residential" aria-pressed="false">Lakossági</button>
+        <button class="filter-button" type="button" data-filter="nonResidential" aria-pressed="false">Nem lakossági</button>
+      </div>
       <div class="info-control">
         <button
           id="infoButton"
