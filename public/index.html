@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Parker térkép</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -35,7 +36,9 @@
         <section id="infoPanel" class="info-panel" aria-label="A Parker Web névjegye" hidden>
           <h1>Parker Web</h1>
           <p>A Parker app webes változata, autós kijelzőre hangolva, hogy gyorsan találj szabad utcai parkolóhelyet.</p>
-          <a href="https://gergelybihary.com" target="_blank" rel="noopener noreferrer">gergelybihary.com</a>
+          <div class="info-links">
+            <a href="https://github.com/biharygergo/parker-web" target="_blank" rel="noopener noreferrer">biharygergo/parker-web</a>
+          </div>
         </section>
       </div>
       <button id="refreshButton" class="refresh-button" type="button" aria-label="Szabad parkolóhelyek frissítése" title="Frissítés">

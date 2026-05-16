@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Parker Web">
+  <rect width="64" height="64" rx="14" fill="#070a0f" />
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#35a7ff" stroke-opacity="0.24" stroke-width="3" />
+  <circle cx="32" cy="32" r="14" fill="none" stroke="#35a7ff" stroke-opacity="0.42" stroke-width="3" />
+  <circle cx="32" cy="32" r="9" fill="#28f29c" />
+  <circle cx="32" cy="32" r="3.5" fill="#f5f8fb" opacity="0.86" />
+</svg>

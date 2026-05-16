@@ -351,16 +351,21 @@ button {
   line-height: 1.45;
 }
 
-.info-panel a {
-  display: inline-flex;
+.info-links {
+  display: grid;
+  gap: 8px;
   margin-top: 14px;
+}
+
+.info-links a {
+  display: inline-flex;
   color: var(--accent);
   font-size: 0.92rem;
   font-weight: 800;
   text-decoration: none;
 }
 
-.info-panel a:hover {
+.info-links a:hover {
   text-decoration: underline;
 }
 
