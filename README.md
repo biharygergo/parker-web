@@ -1,44 +1,44 @@
 # Parker Web
 
-A simple map-based application for viewing Parker on-street parking sensor data.
+Egyszerű, térképes webalkalmazás a Parker utcai parkolószenzor-adatainak megjelenítésére.
 
-## Run
+## Futtatás
 
 ```sh
 export PARKER_AUTHORIZATION=your-token
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+Ezután nyisd meg: [http://localhost:3000](http://localhost:3000).
 
 ## API proxy
 
-The browser calls the local `/api/sensors` endpoint:
+A böngésző a helyi `/api/sensors` végpontot hívja:
 
 ```text
 /api/sensors?lat=47.51551463432745&lng=19.050964125951115&radius_meters=360
 ```
 
-The local server forwards that request to:
+A helyi szerver ezt a kérést ide továbbítja:
 
 ```text
 https://parker-proxy.codeandsoda.hu/sensors
 ```
 
-It sends the Parker authorization header server-side so the token is not exposed in browser code. Set the token before running locally:
+A Parker jogosultsági fejlécet a szerver küldi tovább, így a token nem kerül a böngészőkódba. Helyi futtatás előtt állítsd be a tokent:
 
 ```sh
 PARKER_AUTHORIZATION=your-token npm run dev
 ```
 
-If the live API is unavailable, the UI displays demo data from the sample response shape so the map remains usable during local development.
+Ha az élő API nem elérhető, a felület demo adatokat jelenít meg a minta válaszformátum alapján, így a térkép helyi fejlesztés közben is használható marad.
 
-## Deploy to Vercel
+## Vercel telepítés
 
-This repo is Vercel-ready:
+Ez a repo Vercel-kompatibilis:
 
-- `public/` is the static output directory.
-- `api/sensors.js` is the Vercel Function that proxies Parker API requests.
-- `vercel.json` tells Vercel to serve `public/` as the deployment output.
+- A `public/` a statikus kimeneti könyvtár.
+- Az `api/sensors.js` a Vercel Function, amely proxyn keresztül hívja a Parker API-t.
+- A `vercel.json` beállítja, hogy a Vercel a `public/` könyvtárat szolgálja ki telepítési kimenetként.
 
-Set `PARKER_AUTHORIZATION` in Vercel Project Settings before deploying.
+Telepítés előtt állítsd be a `PARKER_AUTHORIZATION` környezeti változót a Vercel Project Settings felületén.

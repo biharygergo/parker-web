@@ -24,6 +24,7 @@
     radial-gradient(circle at 50% 45%, transparent 0, transparent 48%, rgba(255, 255, 255, 0.18) 100%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 24%, transparent 76%, rgba(255, 255, 255, 0.24));
   --control-hover: rgba(10, 18, 28, 0.06);
+  --status-sheen: rgba(255, 255, 255, 0.64);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -53,6 +54,7 @@
       radial-gradient(circle at 50% 45%, transparent 0, transparent 45%, rgba(0, 0, 0, 0.24) 100%),
       linear-gradient(180deg, rgba(0, 0, 0, 0.16), transparent 22%, transparent 74%, rgba(0, 0, 0, 0.34));
     --control-hover: rgba(255, 255, 255, 0.08);
+    --status-sheen: rgba(255, 255, 255, 0.28);
   }
 }
 
@@ -158,13 +160,34 @@ button {
   border-radius: 8px;
   background: var(--glass);
   color: var(--text);
+  overflow: hidden;
   padding: 10px 14px;
   box-shadow: 0 18px 48px var(--shadow);
-  font-size: 0.98rem;
-  font-weight: 780;
+  font-family: "Avenir Next Condensed", "SF Pro Display", "Segoe UI Variable Display", "DIN Alternate", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   text-align: center;
+  text-transform: uppercase;
   transform: translateX(50%);
   backdrop-filter: blur(18px);
+}
+
+.status::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -55%;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, var(--status-sheen), transparent);
+  content: "";
+  opacity: 0;
+  transform: skewX(-18deg);
+}
+
+.status[data-refreshing="true"]::after {
+  animation: status-sweep 0.9s cubic-bezier(0.2, 0.82, 0.24, 1);
 }
 
 .status[data-tone="warning"] {
@@ -176,14 +199,18 @@ button {
   border-color: var(--free-border);
 }
 
-.refresh-button {
+.info-control {
   position: absolute;
   top: 18px;
-  right: 18px;
+  left: 18px;
+  z-index: 520;
+}
+
+.info-button,
+.refresh-button {
+  position: absolute;
   z-index: 500;
   display: grid;
-  width: 56px;
-  height: 56px;
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -194,10 +221,25 @@ button {
   backdrop-filter: blur(18px);
 }
 
+.info-button {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.refresh-button {
+  top: 18px;
+  right: 18px;
+  width: 56px;
+  height: 56px;
+}
+
+.info-button:hover,
 .refresh-button:hover {
   background: var(--glass-strong);
 }
 
+.info-button:focus-visible,
 .refresh-button:focus-visible {
   outline: 3px solid var(--accent-focus);
   outline-offset: 3px;
@@ -218,6 +260,62 @@ button {
   stroke-width: 2.2;
 }
 
+.info-button svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.info-panel {
+  width: min(320px, calc(100vw - 36px));
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass-strong);
+  color: var(--text);
+  padding: 16px;
+  box-shadow: 0 18px 48px var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.info-panel[hidden] {
+  display: none;
+}
+
+.info-panel h1 {
+  margin: 0 0 8px;
+  font-family: "Avenir Next Condensed", "SF Pro Display", "Segoe UI Variable Display", "DIN Alternate", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 840;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.info-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.info-panel a {
+  display: inline-flex;
+  margin-top: 14px;
+  color: var(--accent);
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.info-panel a:hover {
+  text-decoration: underline;
+}
+
 .refresh-button[aria-busy="true"] svg {
   animation: spin 0.8s linear infinite;
 }
@@ -225,6 +323,22 @@ button {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes status-sweep {
+  0% {
+    left: -55%;
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 0.72;
+  }
+
+  100% {
+    left: 112%;
+    opacity: 0;
   }
 }
 
@@ -317,10 +431,21 @@ button {
     width: 52px;
     height: 52px;
   }
+
+  .info-control {
+    top: 14px;
+    left: 14px;
+  }
+
+  .info-button {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .refresh-button[aria-busy="true"] svg,
+  .status[data-refreshing="true"]::after,
   .user-marker span::before,
   .user-marker span::after {
     animation: none;

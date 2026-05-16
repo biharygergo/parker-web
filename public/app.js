@@ -74,6 +74,8 @@ const fallbackSpaces = [
 const elements = {
   status: document.querySelector("#status"),
   refresh: document.querySelector("#refreshButton"),
+  info: document.querySelector("#infoButton"),
+  infoPanel: document.querySelector("#infoPanel"),
 };
 
 const map = L.map("map", { zoomControl: false }).setView([BUDAPEST_CENTER.lat, BUDAPEST_CENTER.lng], 17);
@@ -92,6 +94,10 @@ let lastFetchCenter;
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
   elements.status.dataset.tone = tone;
+  elements.status.dataset.refreshing = "false";
+  requestAnimationFrame(() => {
+    elements.status.dataset.refreshing = "true";
+  });
 }
 
 function setRefreshLoading(loading) {
@@ -158,9 +164,9 @@ function renderMap(center, spaces) {
       icon: createParkingIcon(),
     })
       .bindPopup(
-        `<strong>${space.parkingPlaceId || "Available parking"}</strong><br>${
-          space.category || "Uncategorized"
-        }<br>${Math.round(space.distance)} m away`
+        `<strong>${space.parkingPlaceId || "Szabad parkolóhely"}</strong><br>${
+          space.category || "Nincs kategória"
+        }<br>${Math.round(space.distance)} m távolságra`
       )
       .addTo(markerLayer);
   });
@@ -188,7 +194,7 @@ async function loadParkingSpaces(center, usingFallbackLocation = false) {
   isUsingFallbackLocation = usingFallbackLocation;
   lastFetchCenter = center;
   setRefreshLoading(true);
-  setStatus("Refreshing...");
+  setStatus("Frissítés...");
 
   try {
     const response = await fetch(
@@ -203,11 +209,11 @@ async function loadParkingSpaces(center, usingFallbackLocation = false) {
 
     const spaces = normalizeSpaces(await response.json(), center);
     renderMap(center, spaces);
-    setStatus(`${spaces.length} free spots ${usingFallbackLocation ? "nearby" : "near you"}`, "success");
+    setStatus(`${spaces.length} szabad hely ${usingFallbackLocation ? "a közelben" : "körülötted"}`, "success");
   } catch (error) {
     const spaces = normalizeSpaces(fallbackSpaces, center);
     renderMap(center, spaces);
-    setStatus(`${spaces.length} demo spots nearby`, "warning");
+    setStatus(`${spaces.length} demo hely a közelben`, "warning");
   } finally {
     setRefreshLoading(false);
   }
@@ -225,13 +231,13 @@ function updateCurrentLocation(center) {
 }
 
 function useFallbackLocation(message) {
-  setStatus(`${message} Showing default area.`, "warning");
+  setStatus(`${message} Az alapértelmezett környéket mutatom.`, "warning");
   loadParkingSpaces(BUDAPEST_CENTER, true);
 }
 
 function start() {
   if (!navigator.geolocation) {
-    useFallbackLocation("Location unavailable.");
+    useFallbackLocation("A helyzet nem elérhető.");
     return;
   }
 
@@ -244,7 +250,7 @@ function start() {
 
   const handleError = (error) => {
     if (!lastFetchCenter) {
-      useFallbackLocation(error.message || "Could not read your location.");
+      useFallbackLocation(error.message || "Nem sikerült lekérni a helyzeted.");
     }
   };
 
@@ -274,6 +280,31 @@ function start() {
 
 elements.refresh.addEventListener("click", () => {
   loadParkingSpaces(currentCenter, isUsingFallbackLocation);
+});
+
+elements.info.addEventListener("click", () => {
+  const isOpen = elements.info.getAttribute("aria-expanded") === "true";
+  elements.info.setAttribute("aria-expanded", String(!isOpen));
+  elements.infoPanel.hidden = isOpen;
+});
+
+document.addEventListener("click", (event) => {
+  if (elements.infoPanel.hidden || event.target.closest(".info-control")) {
+    return;
+  }
+
+  elements.info.setAttribute("aria-expanded", "false");
+  elements.infoPanel.hidden = true;
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || elements.infoPanel.hidden) {
+    return;
+  }
+
+  elements.info.setAttribute("aria-expanded", "false");
+  elements.infoPanel.hidden = true;
+  elements.info.focus();
 });
 
 if (themeMedia.addEventListener) {

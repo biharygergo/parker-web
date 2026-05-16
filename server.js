@@ -40,16 +40,16 @@ async function handleSensors(request, response, requestUrl) {
 
   if (!parkerAuthorization) {
     sendJson(response, 500, {
-      error: "Missing Parker authorization",
-      message: "Set PARKER_AUTHORIZATION in the server environment.",
+      error: "Hiányzó Parker jogosultság",
+      message: "Állítsd be a PARKER_AUTHORIZATION változót a szerver környezetében.",
     });
     return;
   }
 
   if (!isValidCoordinate(lat, lng)) {
     sendJson(response, 400, {
-      error: "Invalid coordinates",
-      message: "Provide lat and lng query parameters with valid GPS coordinates.",
+      error: "Érvénytelen koordináták",
+      message: "Adj meg érvényes GPS-koordinátákat a lat és lng query paraméterekben.",
     });
     return;
   }
@@ -73,7 +73,7 @@ async function handleSensors(request, response, requestUrl) {
 
     if (!upstreamResponse.ok) {
       sendJson(response, upstreamResponse.status, {
-        error: "Parker API request failed",
+        error: "A Parker API-kérés sikertelen",
         status: upstreamResponse.status,
         body: bodyText.slice(0, 500),
       });
@@ -87,8 +87,8 @@ async function handleSensors(request, response, requestUrl) {
     response.end(bodyText);
   } catch (error) {
     sendJson(response, 502, {
-      error: "Parker API unavailable",
-      message: error instanceof Error ? error.message : "Unknown upstream error",
+      error: "A Parker API nem elérhető",
+      message: error instanceof Error ? error.message : "Ismeretlen upstream hiba",
     });
   }
 }
@@ -100,14 +100,14 @@ function sendStatic(response, pathname) {
 
   if (!filePath.startsWith(PUBLIC_DIR)) {
     response.writeHead(403);
-    response.end("Forbidden");
+    response.end("Tiltott hozzáférés");
     return;
   }
 
   fs.readFile(filePath, (error, content) => {
     if (error) {
       response.writeHead(error.code === "ENOENT" ? 404 : 500);
-      response.end(error.code === "ENOENT" ? "Not found" : "Server error");
+      response.end(error.code === "ENOENT" ? "Nem található" : "Szerverhiba");
       return;
     }
 
@@ -130,5 +130,5 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Parker web app running at http://localhost:${PORT}`);
+  console.log(`A Parker webapp itt fut: http://localhost:${PORT}`);
 });

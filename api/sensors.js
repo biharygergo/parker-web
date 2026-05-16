@@ -25,16 +25,16 @@ module.exports = async function sensors(request, response) {
 
   if (!parkerAuthorization) {
     sendJson(response, 500, {
-      error: "Missing Parker authorization",
-      message: "Set PARKER_AUTHORIZATION in the server environment.",
+      error: "Hiányzó Parker jogosultság",
+      message: "Állítsd be a PARKER_AUTHORIZATION változót a szerver környezetében.",
     });
     return;
   }
 
   if (!isValidCoordinate(lat, lng)) {
     sendJson(response, 400, {
-      error: "Invalid coordinates",
-      message: "Provide lat and lng query parameters with valid GPS coordinates.",
+      error: "Érvénytelen koordináták",
+      message: "Adj meg érvényes GPS-koordinátákat a lat és lng query paraméterekben.",
     });
     return;
   }
@@ -58,7 +58,7 @@ module.exports = async function sensors(request, response) {
 
     if (!upstreamResponse.ok) {
       sendJson(response, upstreamResponse.status, {
-        error: "Parker API request failed",
+        error: "A Parker API-kérés sikertelen",
         status: upstreamResponse.status,
         body: bodyText.slice(0, 500),
       });
@@ -71,8 +71,8 @@ module.exports = async function sensors(request, response) {
     response.end(bodyText);
   } catch (error) {
     sendJson(response, 502, {
-      error: "Parker API unavailable",
-      message: error instanceof Error ? error.message : "Unknown upstream error",
+      error: "A Parker API nem elérhető",
+      message: error instanceof Error ? error.message : "Ismeretlen upstream hiba",
     });
   }
 };

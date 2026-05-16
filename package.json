@@ -4,7 +4,7 @@
   "private": true,
   "description": "A simple map-based viewer for Parker on-street parking sensors.",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "node --watch server.js",
     "start": "NODE_ENV=production node server.js",
     "check": "node --check server.js && node --check api/sensors.js && node --check public/app.js"
   },
