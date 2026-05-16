@@ -2,6 +2,10 @@
 
 A simple map-based application for viewing Parker on-street parking sensor data.
 
+## Why
+
+Parker is useful while driving, but using a phone in the car is awkward and distracting. Parker Web is a dashboard-friendly version that can run on a car display, such as a Tesla browser, so nearby free street parking is visible at a glance without fumbling with a phone.
+
 ## Run
 
 ```sh
