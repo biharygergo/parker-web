@@ -472,22 +472,57 @@ button {
 
 @media (max-width: 620px) {
   .status {
-    bottom: 14px;
+    right: 86px;
+    left: 14px;
+    bottom: 38px;
     min-width: auto;
-    padding: 12px 14px;
-    font-size: 0.94rem;
+    max-width: none;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    transform: none;
   }
 
   .filter-control {
-    bottom: 64px;
-    max-width: calc(100% - 28px);
+    right: 86px;
+    bottom: 86px;
+    left: 14px;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-columns: none;
     overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    transform: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filter-control::-webkit-scrollbar {
+    display: none;
   }
 
   .filter-button {
-    min-width: 64px;
-    padding: 0 9px;
+    min-width: 94px;
+    height: 42px;
+    padding: 0 12px;
     font-size: 0.76rem;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .leaflet-bottom.leaflet-right {
+    right: 14px;
+    bottom: 14px;
+    left: auto;
+    margin-bottom: 0;
+    margin-right: 0;
+  }
+
+  .leaflet-bottom.leaflet-right .leaflet-control {
+    margin: 0 0 0 auto;
+  }
+
+  .leaflet-control-zoom a {
+    width: 52px !important;
   }
 
   .refresh-button {
