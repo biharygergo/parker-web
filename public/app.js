@@ -102,6 +102,7 @@ let lastFetchCenter;
 let currentSpaces = [];
 let activeFilter = "all";
 let searchMode = "location";
+let needsForegroundRefresh = false;
 
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
@@ -375,6 +376,19 @@ async function loadParkingSpaces(center, usingFallbackLocation = false) {
   }
 }
 
+function isForegroundTab() {
+  return document.visibilityState !== "hidden";
+}
+
+function loadParkingSpacesWhenForeground(center, usingFallbackLocation = false) {
+  if (!isForegroundTab()) {
+    needsForegroundRefresh = true;
+    return;
+  }
+
+  loadParkingSpaces(center, usingFallbackLocation);
+}
+
 function updateCurrentLocation(center) {
   currentLocation = center;
   isUsingFallbackLocation = false;
@@ -388,13 +402,22 @@ function updateCurrentLocation(center) {
   map.panTo([center.lat, center.lng], { animate: true, duration: 0.8 });
 
   if (!lastFetchCenter || distanceMeters(lastFetchCenter, center) >= MIN_REFETCH_DISTANCE_METERS) {
-    loadParkingSpaces(center);
+    loadParkingSpacesWhenForeground(center);
   }
 }
 
 function useFallbackLocation(message) {
   setStatus(`${message} Az alapértelmezett környéket mutatom.`, "warning");
-  loadParkingSpaces(BUDAPEST_CENTER, true);
+  loadParkingSpacesWhenForeground(BUDAPEST_CENTER, true);
+}
+
+function refreshAfterReturningToForeground() {
+  if (!isForegroundTab() || !needsForegroundRefresh) {
+    return;
+  }
+
+  needsForegroundRefresh = false;
+  loadParkingSpaces(searchMode === "map" ? currentCenter : currentLocation || currentCenter, isUsingFallbackLocation);
 }
 
 function start() {
@@ -492,6 +515,9 @@ document.addEventListener("keydown", (event) => {
   elements.info.focus();
 });
 
+document.addEventListener("visibilitychange", refreshAfterReturningToForeground);
+window.addEventListener("focus", refreshAfterReturningToForeground);
+
 map.on("move", () => {
   if (searchMode !== "map") {
     return;
@@ -510,5 +536,5 @@ if (themeMedia.addEventListener) {
 
 start();
 setInterval(() => {
-  loadParkingSpaces(currentCenter, isUsingFallbackLocation);
+  loadParkingSpacesWhenForeground(currentCenter, isUsingFallbackLocation);
 }, AUTO_REFRESH_MS);
