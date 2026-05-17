@@ -247,6 +247,102 @@ button {
   box-shadow: inset 0 0 0 1px var(--free-border);
 }
 
+.mode-control {
+  position: absolute;
+  top: 18px;
+  right: 86px;
+  z-index: 500;
+  display: grid;
+  grid-template-columns: repeat(2, 48px);
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass);
+  padding: 4px;
+  box-shadow: 0 18px 48px var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.mode-button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mode-button:hover {
+  background: var(--control-hover);
+  color: var(--text);
+}
+
+.mode-button:focus-visible {
+  outline: 3px solid var(--accent-focus);
+  outline-offset: 2px;
+}
+
+.mode-button[aria-pressed="true"] {
+  background: var(--glass-strong);
+  color: var(--text);
+  box-shadow:
+    inset 0 0 0 1px var(--accent-focus),
+    0 0 20px var(--accent-ring);
+}
+
+.mode-button svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.1;
+}
+
+.search-here-button {
+  position: absolute;
+  top: 88px;
+  right: 18px;
+  z-index: 500;
+  height: 42px;
+  border: 1px solid var(--accent-focus);
+  border-radius: 8px;
+  background: var(--glass-strong);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0 16px;
+  box-shadow: 0 18px 48px var(--shadow);
+  font-family: "Avenir Next Condensed", "SF Pro Display", "Segoe UI Variable Display", "DIN Alternate", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 840;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  backdrop-filter: blur(18px);
+}
+
+.search-here-button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.search-here-button:focus-visible {
+  outline: 3px solid var(--accent-focus);
+  outline-offset: 3px;
+}
+
+.search-here-button:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+.search-here-button[hidden] {
+  display: none;
+}
+
 .info-control {
   position: absolute;
   top: 18px;
@@ -457,6 +553,48 @@ button {
     0 12px 28px var(--shadow);
 }
 
+.search-marker span {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--free-outline);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 8px var(--accent-ring),
+    0 0 26px var(--accent-glow),
+    0 12px 28px var(--shadow);
+}
+
+.search-marker span::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 50%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--free-outline);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.search-marker span::after {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  left: 8px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--free-outline);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.search-radius {
+  filter: drop-shadow(0 0 12px var(--accent-ring));
+}
+
 @keyframes radar-pulse {
   0% {
     opacity: 0.58;
@@ -530,6 +668,25 @@ button {
     right: 14px;
     width: 52px;
     height: 52px;
+  }
+
+  .mode-control {
+    top: 14px;
+    right: 74px;
+    grid-template-columns: repeat(2, 44px);
+  }
+
+  .mode-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .search-here-button {
+    top: 78px;
+    right: 14px;
+    height: 40px;
+    padding: 0 14px;
+    font-size: 0.82rem;
   }
 
   .info-control {

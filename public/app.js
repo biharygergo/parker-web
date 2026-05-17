@@ -3,6 +3,7 @@ const SEARCH_RADIUS_METERS = 300;
 const AUTO_REFRESH_MS = 60 * 1000;
 const LOCATION_REFRESH_MS = 10 * 1000;
 const MIN_REFETCH_DISTANCE_METERS = 35;
+const MIN_SEARCH_MOVE_METERS = 15;
 const THEME_QUERY = "(prefers-color-scheme: dark)";
 const TILE_LAYERS = {
   light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -74,6 +75,8 @@ const fallbackSpaces = [
 const elements = {
   status: document.querySelector("#status"),
   refresh: document.querySelector("#refreshButton"),
+  searchHere: document.querySelector("#searchHereButton"),
+  modeButtons: document.querySelectorAll(".mode-button"),
   info: document.querySelector("#infoButton"),
   infoPanel: document.querySelector("#infoPanel"),
   filters: document.querySelectorAll(".filter-button"),
@@ -86,13 +89,19 @@ let tileLayer = L.tileLayer(TILE_LAYERS[themeMedia.matches ? "dark" : "light"], 
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
 let markerLayer = L.layerGroup().addTo(map);
+let overlayLayer = L.layerGroup().addTo(map);
 let userMarker;
+let searchMarker;
+let searchCircle;
 let currentCenter = BUDAPEST_CENTER;
+let currentLocation;
+let pendingSearchCenter = BUDAPEST_CENTER;
 let isUsingFallbackLocation = true;
 let isLoading = false;
 let lastFetchCenter;
 let currentSpaces = [];
 let activeFilter = "all";
+let searchMode = "location";
 
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
@@ -106,7 +115,9 @@ function setStatus(message, tone = "neutral") {
 function setRefreshLoading(loading) {
   isLoading = loading;
   elements.refresh.disabled = loading;
+  elements.searchHere.disabled = loading;
   elements.refresh.setAttribute("aria-busy", String(loading));
+  elements.searchHere.setAttribute("aria-busy", String(loading));
 }
 
 function updateTileTheme(event) {
@@ -130,6 +141,15 @@ function createUserIcon() {
     html: '<span><i aria-hidden="true"></i></span>',
     iconSize: [88, 88],
     iconAnchor: [44, 44],
+  });
+}
+
+function createSearchIcon() {
+  return L.divIcon({
+    className: "search-marker",
+    html: "<span></span>",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
   });
 }
 
@@ -187,7 +207,7 @@ function filterSpaces(spaces) {
 }
 
 function statusLabel(count, usingFallbackLocation) {
-  const location = usingFallbackLocation ? "a közelben" : "körülötted";
+  const location = searchMode === "map" ? "a kijelölt körben" : usingFallbackLocation ? "a közelben" : "körülötted";
 
   if (activeFilter === "residential") {
     return `${count} lakossági hely ${location}`;
@@ -208,7 +228,8 @@ function renderFilteredSpaces(center, usingFallbackLocation, tone = "success") {
 
 function renderMap(center, spaces) {
   markerLayer.clearLayers();
-  renderUserMarker(center);
+  renderLocationMarker();
+  renderSearchOverlay(searchMode === "map" ? center : null);
 
   spaces.forEach((space) => {
     L.marker([space.gpsCoordinates.latitude, space.gpsCoordinates.longitude], {
@@ -224,16 +245,101 @@ function renderMap(center, spaces) {
 
   const bounds = L.latLngBounds([[center.lat, center.lng]]);
   spaces.forEach((space) => bounds.extend([space.gpsCoordinates.latitude, space.gpsCoordinates.longitude]));
-  map.fitBounds(bounds, { padding: [72, 72], maxZoom: 18 });
+  if (searchMode === "location") {
+    map.fitBounds(bounds, { padding: [72, 72], maxZoom: 18 });
+  }
 }
 
-function renderUserMarker(center) {
-  if (userMarker) {
-    userMarker.setLatLng([center.lat, center.lng]);
+function renderLocationMarker() {
+  if (!currentLocation) {
     return;
   }
 
-  userMarker = L.marker([center.lat, center.lng], { icon: createUserIcon(), zIndexOffset: 1000 }).addTo(map);
+  if (userMarker) {
+    userMarker.setLatLng([currentLocation.lat, currentLocation.lng]);
+    return;
+  }
+
+  userMarker = L.marker([currentLocation.lat, currentLocation.lng], { icon: createUserIcon(), zIndexOffset: 1000 }).addTo(map);
+}
+
+function renderSearchOverlay(center) {
+  overlayLayer.clearLayers();
+  searchMarker = null;
+  searchCircle = null;
+
+  if (!center) {
+    return;
+  }
+
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#0b84ff";
+  searchCircle = L.circle([center.lat, center.lng], {
+    radius: SEARCH_RADIUS_METERS,
+    interactive: false,
+    color: accent,
+    fillColor: accent,
+    fillOpacity: 0.08,
+    opacity: 0.72,
+    weight: 2,
+    dashArray: "8 10",
+    className: "search-radius",
+  }).addTo(overlayLayer);
+
+  searchMarker = L.marker([center.lat, center.lng], {
+    icon: createSearchIcon(),
+    interactive: false,
+    zIndexOffset: 900,
+  }).addTo(overlayLayer);
+}
+
+function updateSearchOverlay(center) {
+  if (!searchCircle || !searchMarker) {
+    renderSearchOverlay(center);
+    return;
+  }
+
+  searchCircle.setLatLng([center.lat, center.lng]);
+  searchMarker.setLatLng([center.lat, center.lng]);
+}
+
+function mapCenter() {
+  const center = map.getCenter();
+  return { lat: center.lat, lng: center.lng };
+}
+
+function updateSearchHereButton() {
+  const hasMoved = distanceMeters(currentCenter, pendingSearchCenter) >= MIN_SEARCH_MOVE_METERS;
+  elements.searchHere.hidden = searchMode !== "map" || !hasMoved;
+}
+
+function updateModeButtons() {
+  elements.modeButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.mode === searchMode));
+  });
+}
+
+function setSearchMode(nextMode) {
+  if (searchMode === nextMode) {
+    return;
+  }
+
+  searchMode = nextMode;
+  updateModeButtons();
+
+  if (searchMode === "map") {
+    pendingSearchCenter = mapCenter();
+    renderSearchOverlay(pendingSearchCenter);
+    setStatus("Mozgasd a térképet a keresési kör kijelöléséhez.");
+    updateSearchHereButton();
+    return;
+  }
+
+  renderSearchOverlay(null);
+  elements.searchHere.hidden = true;
+
+  if (currentLocation) {
+    updateCurrentLocation(currentLocation, { forceFetch: false });
+  }
 }
 
 async function loadParkingSpaces(center, usingFallbackLocation = false) {
@@ -265,13 +371,20 @@ async function loadParkingSpaces(center, usingFallbackLocation = false) {
     renderFilteredSpaces(center, true, "warning");
   } finally {
     setRefreshLoading(false);
+    updateSearchHereButton();
   }
 }
 
 function updateCurrentLocation(center) {
-  currentCenter = center;
+  currentLocation = center;
   isUsingFallbackLocation = false;
-  renderUserMarker(center);
+  renderLocationMarker();
+
+  if (searchMode === "map") {
+    return;
+  }
+
+  currentCenter = center;
   map.panTo([center.lat, center.lng], { animate: true, duration: 0.8 });
 
   if (!lastFetchCenter || distanceMeters(lastFetchCenter, center) >= MIN_REFETCH_DISTANCE_METERS) {
@@ -328,7 +441,20 @@ function start() {
 }
 
 elements.refresh.addEventListener("click", () => {
-  loadParkingSpaces(currentCenter, isUsingFallbackLocation);
+  loadParkingSpaces(searchMode === "map" ? pendingSearchCenter : currentCenter, isUsingFallbackLocation);
+  elements.searchHere.hidden = true;
+});
+
+elements.searchHere.addEventListener("click", () => {
+  pendingSearchCenter = mapCenter();
+  loadParkingSpaces(pendingSearchCenter, false);
+  elements.searchHere.hidden = true;
+});
+
+elements.modeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setSearchMode(button.dataset.mode);
+  });
 });
 
 elements.filters.forEach((button) => {
@@ -364,6 +490,16 @@ document.addEventListener("keydown", (event) => {
   elements.info.setAttribute("aria-expanded", "false");
   elements.infoPanel.hidden = true;
   elements.info.focus();
+});
+
+map.on("move", () => {
+  if (searchMode !== "map") {
+    return;
+  }
+
+  pendingSearchCenter = mapCenter();
+  updateSearchOverlay(pendingSearchCenter);
+  updateSearchHereButton();
 });
 
 if (themeMedia.addEventListener) {
