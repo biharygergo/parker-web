@@ -20,7 +20,7 @@ Then open [http://localhost:3000](http://localhost:3000).
 The browser calls the local `/api/sensors` endpoint:
 
 ```text
-/api/sensors?lat=47.51551463432745&lng=19.050964125951115&radius_meters=360
+/api/sensors?lat=47.51551463432745&lng=19.050964125951115&radius_meters=300
 ```
 
 The local server forwards that request to:

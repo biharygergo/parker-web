@@ -36,7 +36,7 @@ async function handleSensors(request, response, requestUrl) {
   const parkerAuthorization = process.env.PARKER_AUTHORIZATION;
   const lat = parseNumber(requestUrl.searchParams.get("lat"));
   const lng = parseNumber(requestUrl.searchParams.get("lng"));
-  const radiusMeters = parseNumber(requestUrl.searchParams.get("radius_meters"), 360);
+  const radiusMeters = parseNumber(requestUrl.searchParams.get("radius_meters"), 300);
 
   if (!parkerAuthorization) {
     sendJson(response, 500, {
