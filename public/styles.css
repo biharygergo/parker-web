@@ -186,8 +186,12 @@ button {
   transform: skewX(-18deg);
 }
 
-.status[data-refreshing="true"]::after {
+.status[data-updated="true"]::after {
   animation: status-sweep 0.9s cubic-bezier(0.2, 0.82, 0.24, 1);
+}
+
+.status[data-refreshing="true"] {
+  animation: status-pulse 1.15s ease-in-out infinite;
 }
 
 .status[data-tone="warning"] {
@@ -343,6 +347,77 @@ button {
   display: none;
 }
 
+.debug-drive-control {
+  position: absolute;
+  top: 146px;
+  right: 18px;
+  z-index: 500;
+  display: grid;
+  grid-template-columns: repeat(3, 42px);
+  grid-template-areas:
+    ". north ."
+    "west south east";
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--glass);
+  padding: 4px;
+  box-shadow: 0 18px 48px var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.debug-drive-control[hidden] {
+  display: none;
+}
+
+.debug-drive-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.debug-drive-button[data-debug-move="north"] {
+  grid-area: north;
+}
+
+.debug-drive-button[data-debug-move="west"] {
+  grid-area: west;
+}
+
+.debug-drive-button[data-debug-move="south"] {
+  grid-area: south;
+}
+
+.debug-drive-button[data-debug-move="east"] {
+  grid-area: east;
+}
+
+.debug-drive-button:hover {
+  background: var(--control-hover);
+  color: var(--text);
+}
+
+.debug-drive-button:focus-visible {
+  outline: 3px solid var(--accent-focus);
+  outline-offset: 2px;
+}
+
+.debug-drive-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
 .info-control {
   position: absolute;
   top: 18px;
@@ -491,6 +566,22 @@ button {
   }
 }
 
+@keyframes status-pulse {
+  0%,
+  100% {
+    border-color: var(--line);
+    box-shadow: 0 18px 48px var(--shadow);
+  }
+
+  50% {
+    border-color: var(--accent-focus);
+    box-shadow:
+      0 18px 48px var(--shadow),
+      0 0 0 4px var(--accent-ring),
+      0 0 24px var(--accent-ring);
+  }
+}
+
 .parking-marker span,
 .user-marker span {
   display: block;
@@ -507,6 +598,11 @@ button {
     0 0 0 2px var(--free-ring),
     0 0 22px var(--free-glow),
     0 12px 24px var(--shadow);
+  transform: scale(1);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s cubic-bezier(0.2, 0.82, 0.24, 1),
+    box-shadow 0.5s ease;
 }
 
 .parking-marker span::after {
@@ -515,6 +611,43 @@ button {
   border-radius: inherit;
   background: var(--free-core);
   content: "";
+}
+
+.parking-marker--entering span {
+  opacity: 0;
+  box-shadow:
+    0 0 0 1px rgba(0, 184, 107, 0),
+    0 0 0 rgba(0, 184, 107, 0),
+    0 8px 16px rgba(0, 0, 0, 0);
+  transform: scale(0.42);
+}
+
+.parking-marker--visible span {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.parking-marker--visible span::before {
+  position: absolute;
+  inset: -14px;
+  border: 2px solid var(--free);
+  border-radius: inherit;
+  content: "";
+  opacity: 0;
+  animation: spot-light-up 0.5s ease-out;
+}
+
+.parking-marker--leaving span {
+  opacity: 0;
+  box-shadow:
+    0 0 0 1px rgba(0, 184, 107, 0),
+    0 0 0 rgba(0, 184, 107, 0),
+    0 8px 16px rgba(0, 0, 0, 0);
+  transform: scale(0.52);
+}
+
+.parking-marker--leaving span::after {
+  opacity: 0.3;
 }
 
 .user-marker span {
@@ -592,7 +725,17 @@ button {
 }
 
 .search-radius {
-  filter: drop-shadow(0 0 12px var(--accent-ring));
+  stroke-linecap: round;
+}
+
+.search-radius--active {
+  filter:
+    drop-shadow(0 0 4px var(--accent-glow))
+    drop-shadow(0 0 18px var(--accent-ring));
+}
+
+.search-radius--passive {
+  filter: drop-shadow(0 0 6px var(--accent-ring));
 }
 
 @keyframes radar-pulse {
@@ -605,6 +748,18 @@ button {
   100% {
     opacity: 0;
     transform: scale(1);
+  }
+}
+
+@keyframes spot-light-up {
+  0% {
+    opacity: 0.58;
+    transform: scale(0.35);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
   }
 }
 
@@ -689,6 +844,17 @@ button {
     font-size: 0.82rem;
   }
 
+  .debug-drive-control {
+    top: 128px;
+    right: 14px;
+    grid-template-columns: repeat(3, 38px);
+  }
+
+  .debug-drive-button {
+    width: 38px;
+    height: 38px;
+  }
+
   .info-control {
     top: 14px;
     left: 14px;
@@ -702,9 +868,13 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .refresh-button[aria-busy="true"] svg,
-  .status[data-refreshing="true"]::after,
+  .status[data-updated="true"]::after,
+  .status[data-refreshing="true"],
+  .parking-marker span,
+  .parking-marker--visible span::before,
   .user-marker span::before,
   .user-marker span::after {
     animation: none;
+    transition: none;
   }
 }
