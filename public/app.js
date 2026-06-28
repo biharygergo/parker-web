@@ -8,6 +8,8 @@ const MIN_REFETCH_DISTANCE_METERS = 35;
 const MIN_SEARCH_MOVE_METERS = 15;
 const DEBUG_MOVE_METERS = 20;
 const PARKING_MARKER_TRANSITION_MS = 500;
+const COMPASS_THROTTLE_MS = 100;
+const COMPASS_SMOOTHING = 0.25;
 const THEME_QUERY = "(prefers-color-scheme: dark)";
 const TILE_LAYERS = {
   light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -80,15 +82,23 @@ const elements = {
   status: document.querySelector("#status"),
   refresh: document.querySelector("#refreshButton"),
   searchHere: document.querySelector("#searchHereButton"),
-  modeButtons: document.querySelectorAll(".mode-button"),
+  modeButtons: document.querySelectorAll(".mode-button[data-mode]"),
   info: document.querySelector("#infoButton"),
   infoPanel: document.querySelector("#infoPanel"),
   filters: document.querySelectorAll(".filter-button"),
   debugDrive: document.querySelector("#debugDriveControl"),
   debugMoveButtons: document.querySelectorAll("[data-debug-move]"),
+  compass: document.querySelector("#compassModeButton"),
 };
 
-const map = L.map("map", { zoomControl: false }).setView([BUDAPEST_CENTER.lat, BUDAPEST_CENTER.lng], 17);
+const map = L.map("map", {
+  zoomControl: false,
+  rotate: true,
+  rotateControl: false,
+  touchRotate: false,
+  shiftKeyRotate: false,
+  bearing: 0,
+}).setView([BUDAPEST_CENTER.lat, BUDAPEST_CENTER.lng], 17);
 const themeMedia = window.matchMedia(THEME_QUERY);
 let tileLayer = L.tileLayer(TILE_LAYERS[themeMedia.matches ? "dark" : "light"], TILE_OPTIONS).addTo(map);
 
@@ -112,6 +122,11 @@ let searchMode = "location";
 let needsForegroundRefresh = false;
 let hasFitInitialLocationBounds = false;
 let isDebugLocationActive = false;
+let compassMode = false;
+let smoothedHeading = null;
+let compassPermissionGranted = false;
+let lastOrientationUpdate = 0;
+let hasAbsoluteOrientation = false;
 
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
@@ -149,7 +164,7 @@ function createParkingIcon() {
 function createUserIcon() {
   return L.divIcon({
     className: "user-marker",
-    html: '<span><i aria-hidden="true"></i></span>',
+    html: '<span><svg class="heading-cone" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><path d="M44 44 L28 4 Q44 0 60 4 Z" fill="var(--accent)" opacity="0.18"/></svg><i aria-hidden="true"></i></span>',
     iconSize: [88, 88],
     iconAnchor: [44, 44],
   });
@@ -360,10 +375,13 @@ function renderLocationMarker() {
 
   if (userMarker) {
     userMarker.setLatLng([currentLocation.lat, currentLocation.lng]);
-    return;
+  } else {
+    userMarker = L.marker([currentLocation.lat, currentLocation.lng], { icon: createUserIcon(), zIndexOffset: 1000 }).addTo(map);
   }
 
-  userMarker = L.marker([currentLocation.lat, currentLocation.lng], { icon: createUserIcon(), zIndexOffset: 1000 }).addTo(map);
+  if (compassMode) {
+    addHeadingCone();
+  }
 }
 
 function renderSearchOverlay(center, options = {}) {
@@ -437,6 +455,10 @@ function setSearchMode(nextMode) {
 
   searchMode = nextMode;
   updateModeButtons();
+
+  if (searchMode === "map" && compassMode) {
+    deactivateCompass();
+  }
 
   if (searchMode === "map") {
     pendingSearchCenter = mapCenter();
@@ -540,6 +562,156 @@ function refreshAfterReturningToForeground() {
 function moveDebugLocation(direction) {
   isDebugLocationActive = true;
   updateCurrentLocation(offsetLocation(currentLocation || currentCenter || BUDAPEST_CENTER, direction));
+}
+
+function updateCompassIcon(bearing) {
+  if (!elements.compass) {
+    return;
+  }
+
+  var icon = elements.compass.querySelector(".compass-icon");
+
+  if (icon) {
+    icon.style.transform = "rotate(" + -bearing + "deg)";
+  }
+}
+
+function addHeadingCone() {
+  if (!userMarker) {
+    return;
+  }
+
+  var el = userMarker.getElement();
+
+  if (el) {
+    el.classList.add("user-marker--has-heading");
+  }
+}
+
+function removeHeadingCone() {
+  if (!userMarker) {
+    return;
+  }
+
+  var el = userMarker.getElement();
+
+  if (el) {
+    el.classList.remove("user-marker--has-heading");
+  }
+}
+
+function onDeviceOrientation(event) {
+  if (event.type === "deviceorientationabsolute") {
+    hasAbsoluteOrientation = true;
+  } else if (hasAbsoluteOrientation) {
+    return;
+  }
+
+  var now = Date.now();
+
+  if (now - lastOrientationUpdate < COMPASS_THROTTLE_MS) {
+    return;
+  }
+
+  lastOrientationUpdate = now;
+  var heading;
+
+  if (event.webkitCompassHeading !== undefined) {
+    heading = event.webkitCompassHeading;
+  } else if (event.alpha !== null) {
+    heading = 360 - event.alpha;
+  } else {
+    return;
+  }
+
+  if (window.screen && window.screen.orientation && window.screen.orientation.angle) {
+    heading = (heading + window.screen.orientation.angle) % 360;
+  }
+
+  if (smoothedHeading === null) {
+    smoothedHeading = heading;
+  } else {
+    var delta = heading - smoothedHeading;
+
+    if (delta > 180) {
+      delta -= 360;
+    }
+
+    if (delta < -180) {
+      delta += 360;
+    }
+
+    smoothedHeading = (smoothedHeading + delta * COMPASS_SMOOTHING + 360) % 360;
+  }
+
+  map.setBearing(smoothedHeading);
+  updateCompassIcon(smoothedHeading);
+}
+
+function activateCompass() {
+  compassMode = true;
+  smoothedHeading = null;
+  hasAbsoluteOrientation = false;
+  elements.compass.setAttribute("aria-pressed", "true");
+  addHeadingCone();
+
+  window.addEventListener("deviceorientation", onDeviceOrientation);
+
+  if ("ondeviceorientationabsolute" in window) {
+    window.addEventListener("deviceorientationabsolute", onDeviceOrientation);
+  }
+
+}
+
+function deactivateCompass() {
+  compassMode = false;
+  smoothedHeading = null;
+  elements.compass.setAttribute("aria-pressed", "false");
+  removeHeadingCone();
+
+  window.removeEventListener("deviceorientationabsolute", onDeviceOrientation);
+  window.removeEventListener("deviceorientation", onDeviceOrientation);
+
+  map.setBearing(0);
+  updateCompassIcon(0);
+}
+
+async function toggleCompass() {
+  if (compassMode) {
+    deactivateCompass();
+    return;
+  }
+
+  if (typeof DeviceOrientationEvent === "undefined") {
+    setStatus("Az iránytű nem elérhető ezen az eszközön.", "warning");
+    return;
+  }
+
+  if (typeof DeviceOrientationEvent.requestPermission === "function" && !compassPermissionGranted) {
+    try {
+      var permission = await DeviceOrientationEvent.requestPermission();
+
+      if (permission !== "granted") {
+        setStatus("Az iránytűhöz szükséges engedély megtagadva.", "warning");
+        return;
+      }
+
+      compassPermissionGranted = true;
+    } catch (error) {
+      setStatus("Az iránytű engedélyt nem sikerült kérni.", "warning");
+      return;
+    }
+  }
+
+  activateCompass();
+}
+
+function setupCompass() {
+  if (!elements.compass) {
+    return;
+  }
+
+  elements.compass.addEventListener("click", toggleCompass);
 }
 
 function setupDebugDriveControls() {
@@ -673,6 +845,7 @@ if (themeMedia.addEventListener) {
   themeMedia.addListener(updateTileTheme);
 }
 
+setupCompass();
 setupDebugDriveControls();
 start();
 setInterval(() => {

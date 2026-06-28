@@ -48,6 +48,19 @@
             <path d="M8 11h6" />
           </svg>
         </button>
+        <button
+          id="compassModeButton"
+          class="mode-button compass-button"
+          type="button"
+          aria-pressed="false"
+          aria-label="Iránytű mód: a térkép az irányod szerint fordul"
+          title="Iránytű"
+        >
+          <svg class="compass-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <polygon points="12,2 15.5,14 12,12 8.5,14" />
+            <polygon points="12,22 8.5,10 12,12 15.5,10" opacity="0.35" />
+          </svg>
+        </button>
       </div>
       <button id="searchHereButton" class="search-here-button" type="button" hidden>Keresés itt</button>
       <div id="debugDriveControl" class="debug-drive-control" aria-label="Debug helyzet mozgatása" hidden>
@@ -109,6 +122,7 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

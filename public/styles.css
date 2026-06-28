@@ -257,7 +257,7 @@ button {
   right: 86px;
   z-index: 500;
   display: grid;
-  grid-template-columns: repeat(2, 48px);
+  grid-template-columns: repeat(3, 48px);
   gap: 4px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -305,6 +305,18 @@ button {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2.1;
+}
+
+.compass-icon {
+  width: 25px;
+  height: 25px;
+  fill: currentColor;
+  stroke: none;
+  transition: transform 0.15s ease-out;
+}
+
+.compass-button[aria-pressed="true"] .compass-icon {
+  color: var(--accent);
 }
 
 .search-here-button {
@@ -686,6 +698,21 @@ button {
     0 12px 28px var(--shadow);
 }
 
+.heading-cone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 88px;
+  height: 88px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.user-marker--has-heading .heading-cone {
+  opacity: 1;
+}
+
 .search-marker span {
   position: relative;
   display: block;
@@ -828,7 +855,7 @@ button {
   .mode-control {
     top: 14px;
     right: 74px;
-    grid-template-columns: repeat(2, 44px);
+    grid-template-columns: repeat(3, 44px);
   }
 
   .mode-button {
@@ -875,6 +902,11 @@ button {
   .user-marker span::before,
   .user-marker span::after {
     animation: none;
+    transition: none;
+  }
+
+  .compass-icon,
+  .heading-cone {
     transition: none;
   }
 }
