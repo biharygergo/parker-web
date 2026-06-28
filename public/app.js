@@ -644,8 +644,8 @@ function onDeviceOrientation(event) {
     smoothedHeading = (smoothedHeading + delta * COMPASS_SMOOTHING + 360) % 360;
   }
 
-  map.setBearing(smoothedHeading);
-  updateCompassIcon(smoothedHeading);
+  map.setBearing(-smoothedHeading);
+  updateCompassIcon(-smoothedHeading);
 }
 
 function activateCompass() {
