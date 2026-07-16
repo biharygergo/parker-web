@@ -8,8 +8,8 @@ const MIN_REFETCH_DISTANCE_METERS = 35;
 const MIN_SEARCH_MOVE_METERS = 15;
 const DEBUG_MOVE_METERS = 20;
 const PARKING_MARKER_TRANSITION_MS = 500;
-const COMPASS_THROTTLE_MS = 100;
 const COMPASS_SMOOTHING = 0.25;
+const MIN_COMPASS_MOVE_METERS = 3;
 const THEME_QUERY = "(prefers-color-scheme: dark)";
 const TILE_LAYERS = {
   light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -124,9 +124,7 @@ let hasFitInitialLocationBounds = false;
 let isDebugLocationActive = false;
 let compassMode = false;
 let smoothedHeading = null;
-let compassPermissionGranted = false;
-let lastOrientationUpdate = 0;
-let hasAbsoluteOrientation = false;
+let lastCompassLocation = null;
 
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
@@ -189,6 +187,15 @@ function distanceMeters(from, to) {
     Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
   return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function bearingDegrees(from, to) {
+  const lat1 = (from.lat * Math.PI) / 180;
+  const lat2 = (to.lat * Math.PI) / 180;
+  const deltaLng = ((to.lng - from.lng) * Math.PI) / 180;
+  const y = Math.sin(deltaLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
 function delay(ms) {
@@ -528,6 +535,7 @@ function loadParkingSpacesWhenForeground(center, usingFallbackLocation = false) 
 }
 
 function updateCurrentLocation(center) {
+  updateCompassFromMovement(center);
   currentLocation = center;
   isUsingFallbackLocation = false;
   renderLocationMarker();
@@ -600,33 +608,22 @@ function removeHeadingCone() {
   }
 }
 
-function onDeviceOrientation(event) {
-  if (event.type === "deviceorientationabsolute") {
-    hasAbsoluteOrientation = true;
-  } else if (hasAbsoluteOrientation) {
+function updateCompassFromMovement(newLocation) {
+  if (!compassMode) {
     return;
   }
 
-  var now = Date.now();
-
-  if (now - lastOrientationUpdate < COMPASS_THROTTLE_MS) {
+  if (!lastCompassLocation) {
+    lastCompassLocation = newLocation;
     return;
   }
 
-  lastOrientationUpdate = now;
-  var heading;
-
-  if (event.webkitCompassHeading !== undefined) {
-    heading = event.webkitCompassHeading;
-  } else if (event.alpha !== null) {
-    heading = 360 - event.alpha;
-  } else {
+  if (distanceMeters(lastCompassLocation, newLocation) < MIN_COMPASS_MOVE_METERS) {
     return;
   }
 
-  if (window.screen && window.screen.orientation && window.screen.orientation.angle) {
-    heading = (heading + window.screen.orientation.angle) % 360;
-  }
+  var heading = bearingDegrees(lastCompassLocation, newLocation);
+  lastCompassLocation = newLocation;
 
   if (smoothedHeading === null) {
     smoothedHeading = heading;
@@ -651,56 +648,26 @@ function onDeviceOrientation(event) {
 function activateCompass() {
   compassMode = true;
   smoothedHeading = null;
-  hasAbsoluteOrientation = false;
+  lastCompassLocation = currentLocation || null;
   elements.compass.setAttribute("aria-pressed", "true");
   addHeadingCone();
-
-  window.addEventListener("deviceorientation", onDeviceOrientation);
-
-  if ("ondeviceorientationabsolute" in window) {
-    window.addEventListener("deviceorientationabsolute", onDeviceOrientation);
-  }
-
 }
 
 function deactivateCompass() {
   compassMode = false;
   smoothedHeading = null;
+  lastCompassLocation = null;
   elements.compass.setAttribute("aria-pressed", "false");
   removeHeadingCone();
-
-  window.removeEventListener("deviceorientationabsolute", onDeviceOrientation);
-  window.removeEventListener("deviceorientation", onDeviceOrientation);
 
   map.setBearing(0);
   updateCompassIcon(0);
 }
 
-async function toggleCompass() {
+function toggleCompass() {
   if (compassMode) {
     deactivateCompass();
     return;
-  }
-
-  if (typeof DeviceOrientationEvent === "undefined") {
-    setStatus("Az iránytű nem elérhető ezen az eszközön.", "warning");
-    return;
-  }
-
-  if (typeof DeviceOrientationEvent.requestPermission === "function" && !compassPermissionGranted) {
-    try {
-      var permission = await DeviceOrientationEvent.requestPermission();
-
-      if (permission !== "granted") {
-        setStatus("Az iránytűhöz szükséges engedély megtagadva.", "warning");
-        return;
-      }
-
-      compassPermissionGranted = true;
-    } catch (error) {
-      setStatus("Az iránytű engedélyt nem sikerült kérni.", "warning");
-      return;
-    }
   }
 
   activateCompass();
