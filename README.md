@@ -49,14 +49,18 @@ Set `PARKER_AUTHORIZATION` and `CARTO_API_KEY` in Vercel Project Settings → En
 
 ## Map tiles
 
-The map uses CARTO Voyager in light mode and Dark Matter in dark mode. Set
-`CARTO_API_KEY` in your local `.env` to enable map tiles locally.
-The browser requests `/api/tiles`; the local server and Vercel Function forward
-tile requests to CARTO with the key server-side. The key is never embedded in
-static assets or returned in errors. Missing configuration returns HTTP 503;
-there is no unauthenticated tile fallback. Successful tiles are cached in the
-browser for one hour and on Vercel's CDN for one day.
+The browser requests CARTO tiles directly: Voyager in light mode and Dark Matter
+in dark mode. `CARTO_API_KEY` is a public browser key and is visible in tile
+requests. Use a basemap key intended for browser use, with domain restrictions
+where supported. Keep `PARKER_AUTHORIZATION` private; it stays in the sensors API.
 
-The tile endpoint is public, so requests can still consume your CARTO quota.
-Ensure your CARTO plan permits this server-side use and caching. Tile proxy
-requests also count toward Vercel function usage on cache misses.
+Locally, the server reads `CARTO_API_KEY` from `.env` and serves `/config.js`.
+On Vercel, `npm run build` generates the ignored `public/config.js` from the
+build environment. Set `CARTO_API_KEY` for each deployment environment and
+redeploy after changing it. The generated configuration contains only this
+public key, never the Parker authorization token.
+
+Vercel is explicitly configured with no framework and `public/` as static
+output, with only `api/` files deployed as functions. If an existing Vercel
+project has Root Directory set to `public`, change it to the repository root.
+The frontend `public/app.js` requires a browser and must not run as a Node entrypoint.

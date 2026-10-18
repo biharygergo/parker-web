@@ -12,8 +12,8 @@ const COMPASS_SMOOTHING = 0.25;
 const MIN_COMPASS_MOVE_METERS = 3;
 const THEME_QUERY = "(prefers-color-scheme: dark)";
 const TILE_LAYERS = {
-  light: "/api/tiles?style=voyager&z={z}&x={x}&y={y}",
-  dark: "/api/tiles?style=dark_all&z={z}&x={x}&y={y}",
+  light: `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${encodeURIComponent(window.PARKER_CONFIG?.cartoApiKey || "")}`,
+  dark: `https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=${encodeURIComponent(window.PARKER_CONFIG?.cartoApiKey || "")}`,
 };
 const TILE_OPTIONS = {
   maxZoom: 20,
