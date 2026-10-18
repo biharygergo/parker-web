@@ -45,4 +45,18 @@ This repo is Vercel-ready:
 - `api/sensors.js` is the Vercel Function that proxies Parker API requests.
 - `vercel.json` tells Vercel to serve `public/` as the deployment output.
 
-Set `PARKER_AUTHORIZATION` in Vercel Project Settings before deploying.
+Set `PARKER_AUTHORIZATION` and `CARTO_API_KEY` in Vercel Project Settings → Environment Variables for the environments you deploy to, then redeploy.
+
+## Map tiles
+
+The map uses CARTO Voyager in light mode and Dark Matter in dark mode. Set
+`CARTO_API_KEY` in your local `.env` to enable map tiles locally.
+The browser requests `/api/tiles`; the local server and Vercel Function forward
+tile requests to CARTO with the key server-side. The key is never embedded in
+static assets or returned in errors. Missing configuration returns HTTP 503;
+there is no unauthenticated tile fallback. Successful tiles are cached in the
+browser for one hour and on Vercel's CDN for one day.
+
+The tile endpoint is public, so requests can still consume your CARTO quota.
+Ensure your CARTO plan permits this server-side use and caching. Tile proxy
+requests also count toward Vercel function usage on cache misses.

@@ -1,6 +1,7 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const handleTiles = require("./api/tiles");
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -120,6 +121,11 @@ function sendStatic(response, pathname) {
 
 const server = http.createServer((request, response) => {
   const requestUrl = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
+
+  if (requestUrl.pathname === "/api/tiles") {
+    handleTiles(request, response);
+    return;
+  }
 
   if (requestUrl.pathname === "/api/sensors") {
     handleSensors(request, response, requestUrl);
