@@ -89,6 +89,22 @@
           </svg>
         </button>
       </div>
+      <div class="favorites-control">
+        <button id="favoritesButton" class="favorites-button" type="button" aria-label="Kedvenc helyek" aria-expanded="false" aria-controls="favoritesPanel" title="Kedvencek">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z" /></svg>
+        </button>
+        <section id="favoritesPanel" class="favorites-panel" aria-label="Kedvenc helyek" hidden>
+          <h2>Kedvencek</h2>
+          <ul id="favoritesList" class="favorites-list"></ul>
+          <form id="favoriteForm">
+            <label for="favoriteName">Térkép közepének mentése</label>
+            <p class="favorites-hint">Mozgasd a térképet az otthonodhoz, munkahelyedhez vagy más kedvenc helyedhez.</p>
+            <input id="favoriteName" name="name" type="text" maxlength="40" required placeholder="Pl. Otthon vagy Munkahely" autocomplete="off" />
+            <button class="favorite-save" type="submit">Hely mentése</button>
+          </form>
+          <p id="favoritesMessage" class="favorites-message" role="status" aria-live="polite"></p>
+        </section>
+      </div>
       <div class="info-control">
         <button
           id="infoButton"
@@ -124,6 +140,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
     <script src="/config.js"></script>
+    <script src="/favorites.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

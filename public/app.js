@@ -125,6 +125,7 @@ let isDebugLocationActive = false;
 let compassMode = false;
 let smoothedHeading = null;
 let lastCompassLocation = null;
+let queuedSearch;
 
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
@@ -479,12 +480,13 @@ function setSearchMode(nextMode) {
   elements.searchHere.hidden = true;
 
   if (currentLocation) {
-    updateCurrentLocation(currentLocation, { forceFetch: false });
+    updateCurrentLocation(currentLocation, { forceFetch: true });
   }
 }
 
 async function loadParkingSpaces(center, usingFallbackLocation = false) {
   if (isLoading) {
+    queuedSearch = { center, usingFallbackLocation };
     return;
   }
 
@@ -518,6 +520,11 @@ async function loadParkingSpaces(center, usingFallbackLocation = false) {
 
     setRefreshLoading(false);
     updateSearchHereButton();
+    if (queuedSearch) {
+      const next = queuedSearch;
+      queuedSearch = undefined;
+      loadParkingSpaces(next.center, next.usingFallbackLocation);
+    }
   }
 }
 
@@ -534,7 +541,7 @@ function loadParkingSpacesWhenForeground(center, usingFallbackLocation = false) 
   loadParkingSpaces(center, usingFallbackLocation);
 }
 
-function updateCurrentLocation(center) {
+function updateCurrentLocation(center, { forceFetch = false } = {}) {
   updateCompassFromMovement(center);
   currentLocation = center;
   isUsingFallbackLocation = false;
@@ -548,7 +555,7 @@ function updateCurrentLocation(center) {
   updateSearchOverlay(center);
   map.panTo([center.lat, center.lng], { animate: true, duration: 0.8 });
 
-  if (!lastFetchCenter || distanceMeters(lastFetchCenter, center) >= MIN_REFETCH_DISTANCE_METERS) {
+  if (forceFetch || !lastFetchCenter || distanceMeters(lastFetchCenter, center) >= MIN_REFETCH_DISTANCE_METERS) {
     loadParkingSpacesWhenForeground(center);
   }
 }
@@ -811,6 +818,18 @@ if (themeMedia.addEventListener) {
 } else {
   themeMedia.addListener(updateTileTheme);
 }
+
+window.setupFavorites({
+  getCenter: mapCenter,
+  onSelect(center) {
+    setSearchMode("map");
+    if (compassMode) deactivateCompass();
+    pendingSearchCenter = center;
+    map.setView([center.lat, center.lng], 18, { animate: false });
+    renderSearchOverlay(center);
+    loadParkingSpaces(center, false);
+  },
+});
 
 setupCompass();
 setupDebugDriveControls();

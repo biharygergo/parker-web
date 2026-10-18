@@ -15,6 +15,17 @@ npm run dev
 
 Then open [http://localhost:3000](http://localhost:3000).
 
+## Favorite places
+
+Open the star button, move the map to your destination, and save its center with
+a name such as Otthon (Home) or Munkahely (Work). Tap a saved place to search
+for free parking around it. Favorite searches stay in map mode, so your current
+GPS position does not move the search. Use the location button to follow your
+position again. Remove a place with its × button to replace it.
+
+Favorites are stored only in this browser's local storage. They survive reloads
+but do not sync across devices, and clearing site data removes them.
+
 ## API proxy
 
 The browser calls the local `/api/sensors` endpoint:
